@@ -1,0 +1,19 @@
+{% extends './layout/layout.html' %} {% block title %} 图书管理首页 {% endblock %} {% block link %}
+<link rel="stylesheet" href="/css/base.css" />
+{% endblock %} {% block content %}
+<div>
+    <h1>{{content}}</h1>
+</div>
+{% endblock %} {% block script %}
+<script type="module">
+    import('/js/base.js').then(_ => {
+        console.log(_.default);
+    });
+</script>
+<script type="nomodule" src="https://cdn.bootcss.com/systemjs/6.2.5/system.min.js"></script>
+<script type="nomodule">
+    System.import("/js/base-bundle.js").then((_) => {
+        console.log(_.default);
+    })
+</script>
+{% endblock %}
