@@ -1,27 +1,39 @@
 const Koa = require('koa');
+const bodyParser = require('koa-bodyparser');
+const cors = require('koa2-cors');
+
+const controller = require('./controller'); //扫描控制器
+const rest = require('./rest'); //restAPI
+const session = require('./session'); //session配置
+
+const fileServ = require('./file-server');//文件资源服务
+
+//const ws = require('./ws/jnbank');
+
 const app = new Koa();
-const config = require('./config');
-const serve = require('koa-static');
-const render = require('koa-swig');
-const co = require('co');
 
-//注册路由
-require('./controllers/index')(app);
+const isProduction = process.env.NODE_ENV === 'production'; //判断是否为生产环境
 
-// 加载静态文件
-app.use(serve(config.staticDir));
+app.use(cors()); //跨域-cors
+app.use(bodyParser()); //解析请求
+app.use(session); //添加session
 
-// 配置模板引擎
-app.context.render = co.wrap(
-    render({
-        root: config.viewDir, // 把视图层加载引来
-        autoescape: true,
-        cache: false, // 缓存
-        ext: 'html',
-        writeBody: false,
-    })
-);
-
-app.listen(config.port, () => {
-    console.log('server is running..');
+app.use(async (ctx, next) => { //输出请求
+    console.log(`${ctx.request.method} ${ctx.request.url}...`); //输出收到的请求
+    await next();
 });
+if (!isProduction) { //静态文件加载
+    let staticFiles = require('./static-file');
+    app.use(staticFiles('/static/', __dirname + '/static'));
+}
+
+app.use(rest.restify()); //REST接口
+app.use(controller()); //扫描加载控制器
+
+//ws.ws();
+
+app.listen(3000); // app应用服务在端口3000监听:
+fileServ.listen(8099)   //文件服务在8099
+
+
+console.log('app started...');
